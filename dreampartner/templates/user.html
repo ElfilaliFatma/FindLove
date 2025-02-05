@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your Love 💕</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to right, #ff9a9e, #fecfef);
+            text-align: center;
+            padding: 30px;
+        }
+
+        .form-container, .processing-container, .match-container {
+            max-width: 400px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            margin: auto;
+            position: relative;
+            display: none;
+            color: #333;
+        }
+
+        h1 {
+            color: #ff3e57;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .heart {
+            color: #ff3e57;
+            font-size: 24px;
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            color: #ff3e57;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ff3e57;
+            border-radius: 8px;
+            font-size: 16px;
+            background: #fff;
+            color: #333;
+        }
+
+        .gender-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .gender-container label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        button {
+            width: 100%;
+            background: #ff3e57;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #e53245;
+        }
+
+        .processing-bar {
+            width: 100%;
+            background: #ddd;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #ff3e57;
+            transition: width 0.1s;
+        }
+
+        .match-list {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .match-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            gap: 10px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .match-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ff3e57;
+        }
+
+        .footer-text {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Registration Form -->
+    <div class="form-container" id="registration-form" style="display: block;">
+        <div class="heart">❤️</div>
+        <h1>Find Your Perfect Match 💕</h1>
+        
+        <form onsubmit="startProcessing(event)">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="first_name">First Name</label>
+            <input type="text" id="first_name" name="first_name" required>
+            
+            <label for="last_name">Last Name</label>
+            <input type="text" id="last_name" name="last_name" required>
+
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required>
+
+            <label for="picture">Profile Picture</label>
+            <input type="file" id="picture" name="picture">
+
+            <label for="birthday">Birthday</label>
+            <input type="date" id="birthday" name="birthday" required>
+
+            <label for="zodiac">Zodiac Sign</label>
+            <select id="zodiac" name="zodiac">
+                <option value="">Select your sign</option>
+                <option value="Aries">Aries</option>
+                <option value="Taurus">Taurus</option>
+                <option value="Gemini">Gemini</option>
+                <option value="Cancer">Cancer</option>
+                <option value="Leo">Leo</option>
+                <option value="Virgo">Virgo</option>
+                <option value="Libra">Libra</option>
+                <option value="Scorpio">Scorpio</option>
+                <option value="Sagittarius">Sagittarius</option>
+                <option value="Capricorn">Capricorn</option>
+                <option value="Aquarius">Aquarius</option>
+                <option value="Pisces">Pisces</option>
+            </select>
+
+           
+            <label for="gender">Gender</label>
+            <div class="gender-container">
+                <label><input type="radio" name="gender" value="male" required> Men</label>
+                <label><input type="radio" name="gender" value="female" required> Women</label>
+            </div>
+
+            <button type="submit">Find Love 💘</button>
+        </form>
+    </div>
+
+
+    <div class="processing-container" id="processing">
+        <h1>Matching in Progress... ⏳</h1>
+        <div class="processing-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <p id="progress-text">0%</p>
+    </div>
+
+
+    <div class="match-container" id="match-list">
+        <h1>Your Matches 💕</h1>
+        <div class="match-list" id="match-results"></div>
+    </div>
+
+    <script>
+        let matches = {
+            "male": [
+                { name: "Emma", img: "https://randomuser.me/api/portraits/women/1.jpg" },
+                { name: "Sophia", img: "https://randomuser.me/api/portraits/women/2.jpg" },
+                { name: "Olivia", img: "https://randomuser.me/api/portraits/women/3.jpg" }
+            ],
+            "female": [
+                { name: "Liam", img: "https://randomuser.me/api/portraits/men/1.jpg" },
+                { name: "Noah", img: "https://randomuser.me/api/portraits/men/2.jpg" },
+                { name: "James", img: "https://randomuser.me/api/portraits/men/3.jpg" }
+            ]
+        };
+
+        function startProcessing(event) {
+            event.preventDefault();
+            
+      
+            let gender = document.querySelector('input[name="gender"]:checked').value;
+            
+ 
+            document.getElementById("registration-form").style.display = "none";
+            document.getElementById("processing").style.display = "block";
+
+            let progressBar = document.getElementById("progress");
+            let progressText = document.getElementById("progress-text");
+            let progress = 0;
+
+            let interval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = progress + "%";
+                progressText.innerText = progress + "%";
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    showMatches(gender);
+                }
+            }, 500);
+        }
+
+        function showMatches(gender) {
+            document.getElementById("processing").style.display = "none";
+            document.getElementById("match-list").style.display = "block";
+
+            let matchResults = document.getElementById("match-results");
+            matchResults.innerHTML = "";
+
+            matches[gender].forEach(match => {
+                matchResults.innerHTML += `
+                    <div class="match-item">
+                        <img src="${match.img}" alt="${match.name}">
+                        <span>${match.name}</span>
+                    </div>
+                `;
+            });
+        }
+    </script>
+
+</body>
+</html>
