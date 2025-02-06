@@ -25,7 +25,7 @@ def register_user(request):
     try:
         data = json.loads(request.body)
         
-        # Extract user details from the request
+        
         first_name = data.get('first_name')
         last_name = data.get('last_name')
         birthdate_str = data.get('birthdate')
@@ -35,17 +35,17 @@ def register_user(request):
         if not (first_name and last_name and birthdate_str and zodiac and gender):
             return HttpResponseBadRequest("Missing required fields.")
         
-        # Check if a user with the same first and last name already exists
+       
         if UserProfile.objects.filter(first_name=first_name, last_name=last_name).exists():
             return HttpResponseBadRequest(f"A user with the name {first_name} {last_name} already exists.")
 
-        # Parse birthdate
+      
         try:
             birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d").date()
         except ValueError:
             return HttpResponseBadRequest("Invalid birthdate format. Use YYYY-MM-DD.")
         
-        # Create user profile
+    
         profile = UserProfile.objects.create(
             first_name=first_name,
             last_name=last_name,
