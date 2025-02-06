@@ -2,7 +2,9 @@ from django.urls import path
 from user import views
 
 urlpatterns = [
-    path('zodiac-compatibility/', views.zodiac_compatibility_view, name='zodiac_compatibility'),
+    path('register_user/', views.register_user, name='register_user'),
+    path('get_compatible_users/', views.get_compatible_users, name='get_compatible_users'),
+
     path('select-compatible/', views.select_compatible_user, name='select_compatible_user'),
     path('accept-match/', views.accept_match, name='accept_match'), 
     path('get-notifications/<int:user_id>/', views.get_notifications, name='get_notifications'),

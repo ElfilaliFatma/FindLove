@@ -99,69 +99,48 @@
             width: 0%;
             height: 100%;
             background: #ff3e57;
-            transition: width 0.1s;
+            transition: width 1s;
         }
 
-        .match-list {
-            text-align: left;
-            margin-top: 20px;
+        .results {
+            margin-top: 30px;
+            display: none;
         }
 
         .match-item {
-            display: flex;
-            align-items: center;
-            background: white;
+            background: #fff;
             padding: 10px;
-            margin: 5px 0;
+            margin: 10px 0;
             border-radius: 8px;
-            gap: 10px;
             box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
         }
 
-        .match-item img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #ff3e57;
-        }
-
-        .footer-text {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #333;
+        .match-item h3 {
+            margin: 0;
+            color: #ff3e57;
         }
     </style>
 </head>
 <body>
 
-    <!-- Registration Form -->
-    <div class="form-container" id="registration-form" style="display: block;">
-        <div class="heart">❤️</div>
-        <h1>Find Your Perfect Match 💕</h1>
-        
-        <form onsubmit="startProcessing(event)">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" required>
-
+    <h1>Find Your Love 💕</h1>
+    <div class="form-container">
+        <div class="heart">💖</div>
+        <h2>Fill in your details</h2>
+        <form id="compatibilityForm">
             <label for="first_name">First Name</label>
             <input type="text" id="first_name" name="first_name" required>
-            
+
             <label for="last_name">Last Name</label>
             <input type="text" id="last_name" name="last_name" required>
 
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required>
-
-            <label for="picture">Profile Picture</label>
-            <input type="file" id="picture" name="picture">
-
-            <label for="birthday">Birthday</label>
-            <input type="date" id="birthday" name="birthday" required>
+            <label for="birthdate">Birthdate (YYYY-MM-DD)</label>
+            <input type="date" id="birthdate" name="birthdate" required>
 
             <label for="zodiac">Zodiac Sign</label>
-            <select id="zodiac" name="zodiac">
-                <option value="">Select your sign</option>
+            <select id="zodiac" name="zodiac" required>
                 <option value="Aries">Aries</option>
                 <option value="Taurus">Taurus</option>
                 <option value="Gemini">Gemini</option>
@@ -176,86 +155,108 @@
                 <option value="Pisces">Pisces</option>
             </select>
 
-           
-            <label for="gender">Gender</label>
             <div class="gender-container">
-                <label><input type="radio" name="gender" value="male" required> Men</label>
-                <label><input type="radio" name="gender" value="female" required> Women</label>
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender" required>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
             </div>
 
-            <button type="submit">Find Love 💘</button>
+            <button type="submit">Find Compatible Matches</button>
         </form>
     </div>
 
-
-    <div class="processing-container" id="processing">
-        <h1>Matching in Progress... ⏳</h1>
+    <div class="processing-container">
+        <h2>Processing...</h2>
         <div class="processing-bar">
-            <div class="progress" id="progress"></div>
+            <div class="progress"></div>
         </div>
-        <p id="progress-text">0%</p>
     </div>
 
-
-    <div class="match-container" id="match-list">
-        <h1>Your Matches 💕</h1>
-        <div class="match-list" id="match-results"></div>
+    <div class="match-container results">
+        <h2>Your Compatible Matches:</h2>
+        <div id="compatibleUsersList"></div>
     </div>
 
     <script>
-        let matches = {
-            "male": [
-                { name: "Emma", img: "https://randomuser.me/api/portraits/women/1.jpg" },
-                { name: "Sophia", img: "https://randomuser.me/api/portraits/women/2.jpg" },
-                { name: "Olivia", img: "https://randomuser.me/api/portraits/women/3.jpg" }
-            ],
-            "female": [
-                { name: "Liam", img: "https://randomuser.me/api/portraits/men/1.jpg" },
-                { name: "Noah", img: "https://randomuser.me/api/portraits/men/2.jpg" },
-                { name: "James", img: "https://randomuser.me/api/portraits/men/3.jpg" }
-            ]
-        };
+        const form = document.getElementById('compatibilityForm');
+        const processingContainer = document.querySelector('.processing-container');
+        const matchContainer = document.querySelector('.match-container');
+        const compatibleUsersList = document.getElementById('compatibleUsersList');
 
-        function startProcessing(event) {
+        form.addEventListener('submit', async function(event) {
             event.preventDefault();
-            
-      
-            let gender = document.querySelector('input[name="gender"]:checked').value;
-            
- 
-            document.getElementById("registration-form").style.display = "none";
-            document.getElementById("processing").style.display = "block";
 
-            let progressBar = document.getElementById("progress");
-            let progressText = document.getElementById("progress-text");
-            let progress = 0;
+            const formData = new FormData(form);
+            const data = {
+                first_name: formData.get('first_name'),
+                last_name: formData.get('last_name'),
+                birthdate: formData.get('birthdate'),
+                zodiac: formData.get('zodiac'),
+                gender: formData.get('gender'),
+            };
 
-            let interval = setInterval(() => {
-                progress += 10;
-                progressBar.style.width = progress + "%";
-                progressText.innerText = progress + "%";
+            processingContainer.style.display = 'block';
+            compatibleUsersList.innerHTML = '';
+            matchContainer.style.display = 'none';
 
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    showMatches(gender);
+            try {
+                const response = await fetch('/zodiac-compatibility/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    const compatibleUsers = result.compatible_users;
+                    const userId = result.user_id;
+
+                    compatibleUsersList.innerHTML = compatibleUsers.map(user => {
+                        return `
+                            <div class="match-item">
+                                <div>
+                                    <h3>${user.first_name} ${user.last_name}</h3>
+                                    <p>Zodiac: ${user.zodiac}</p>
+                                    <p>Gender: ${user.gender}</p>
+                                </div>
+                                <button onclick="selectMatch(${user.id}, ${userId})">Select</button>
+                            </div>
+                        `;
+                    }).join('');
+                    matchContainer.style.display = 'block';
+                } else {
+                    alert(result.message);
                 }
-            }, 500);
-        }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            } finally {
+                processingContainer.style.display = 'none';
+            }
+        });
 
-        function showMatches(gender) {
-            document.getElementById("processing").style.display = "none";
-            document.getElementById("match-list").style.display = "block";
+        function selectMatch(selectedUserId, userId) {
+            const data = {
+                user_id: userId,
+                selected_user_id: selectedUserId,
+            };
 
-            let matchResults = document.getElementById("match-results");
-            matchResults.innerHTML = "";
-
-            matches[gender].forEach(match => {
-                matchResults.innerHTML += `
-                    <div class="match-item">
-                        <img src="${match.img}" alt="${match.name}">
-                        <span>${match.name}</span>
-                    </div>
-                `;
+            fetch('/select-compatible/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            }).then(response => response.json()).then(result => {
+                alert(result.message);
+                // Optionally update the UI with selected match information
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while selecting the match.');
             });
         }
     </script>

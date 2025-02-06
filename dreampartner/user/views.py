@@ -21,9 +21,11 @@ COMPATIBILITY = {
 
 @csrf_exempt
 @require_POST
-def zodiac_compatibility_view(request):
+def register_user(request):
     try:
         data = json.loads(request.body)
+        
+        # Extract user details from the request
         first_name = data.get('first_name')
         last_name = data.get('last_name')
         birthdate_str = data.get('birthdate')
@@ -32,21 +34,18 @@ def zodiac_compatibility_view(request):
 
         if not (first_name and last_name and birthdate_str and zodiac and gender):
             return HttpResponseBadRequest("Missing required fields.")
+        
+        # Check if a user with the same first and last name already exists
+        if UserProfile.objects.filter(first_name=first_name, last_name=last_name).exists():
+            return HttpResponseBadRequest(f"A user with the name {first_name} {last_name} already exists.")
 
+        # Parse birthdate
         try:
-           
             birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d").date()
         except ValueError:
             return HttpResponseBadRequest("Invalid birthdate format. Use YYYY-MM-DD.")
-
-        compatible_users = UserProfile.objects.filter(zodiac__in=COMPATIBILITY.get(zodiac, []))
-
-      
-        if gender == "Female":
-            compatible_users = compatible_users.filter(gender="Male")  
-        elif gender == "Male":
-            compatible_users = compatible_users.filter(gender="Female")  
-
+        
+        # Create user profile
         profile = UserProfile.objects.create(
             first_name=first_name,
             last_name=last_name,
@@ -54,32 +53,65 @@ def zodiac_compatibility_view(request):
             zodiac=zodiac,
             gender=gender
         )
-
-        if compatible_users.exists():
-            compatible_list = [
-                {
-                    "id": user.id,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "birthdate": user.birthdate.strftime("%Y-%m-%d") if user.birthdate else None,
-                    "zodiac": user.zodiac,
-                    "gender": user.gender,
-                    "profile_picture": user.picture.url if user.picture else None
-                }
-                for user in compatible_users
-            ]
-            return JsonResponse({
-                "message": "Compatible users found!",
-                "user_id": profile.id,
-                "compatible_users": compatible_list
-            })
-
-        return JsonResponse({"message": "No compatible users found.", "user_id": profile.id})
+        
+        return JsonResponse({
+            "message": "User registered successfully!",
+            "user_id": profile.id
+        })
 
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Invalid JSON.")
 
+    
+@csrf_exempt
+@require_POST
+def get_compatible_users(request):
+    try:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
 
+        if not user_id:
+            return HttpResponseBadRequest("user_id is required.")
+        
+        
+        try:
+            user = UserProfile.objects.get(id=user_id)
+        except UserProfile.DoesNotExist:
+            return HttpResponseBadRequest("User does not exist.")
+        
+        
+        compatible_zodiacs = COMPATIBILITY.get(user.zodiac, [])
+        
+        
+        compatible_users = UserProfile.objects.filter(zodiac__in=compatible_zodiacs)
+        
+        
+        if user.gender == "Female":
+            compatible_users = compatible_users.filter(gender="Male")
+        elif user.gender == "Male":
+            compatible_users = compatible_users.filter(gender="Female")
+        
+        
+        compatible_list = [
+            {
+                "id": u.id,
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "birthdate": u.birthdate.strftime("%Y-%m-%d") if u.birthdate else None,
+                "zodiac": u.zodiac,
+                "gender": u.gender
+            }
+            for u in compatible_users
+        ]
+        
+        return JsonResponse({
+            "message": "Compatible users found!",
+            "compatible_users": compatible_list
+        })
+
+    except json.JSONDecodeError:
+        return HttpResponseBadRequest("Invalid JSON.")
+ 
 @csrf_exempt
 @require_POST
 def select_compatible_user(request):
@@ -115,24 +147,34 @@ def accept_match(request):
         if not user_id or not match_id:
             return HttpResponseBadRequest("Both user_id and match_id are required.")
 
-        user, match = UserProfile.objects.get(id=user_id), UserProfile.objects.get(id=match_id)
+        user = UserProfile.objects.get(id=user_id)
+        match = UserProfile.objects.get(id=match_id)
 
         if accept:
-            user.matches.add(match)
-            match.matches.add(user)
+            # Accept the match: Update 'match_accepted' to True for both users
+            user.match_accepted = True
             match.match_accepted = True
+            user.save()
             match.save()
+
             message = f"{match.first_name} accepted your match!"
         else:
-            match.selected_match = None
+            # Reject the match: Update 'match_accepted' to False for both users
+            user.match_accepted = False
             match.match_accepted = False
+            user.save()
             match.save()
+
             message = f"{match.first_name} rejected your match."
 
+        # Create a notification for the user
         Notification.objects.create(receiver=user, sender=match, message=message)
         return JsonResponse({"message": message})
+
     except json.JSONDecodeError:
         return HttpResponseBadRequest("Invalid JSON.")
+
+
 
 @csrf_exempt
 def get_notifications(request, user_id):
@@ -171,7 +213,7 @@ def get_all_matches(request):
     for user in all_users:
         if user.selected_match:
             status = "Pending"
-            if user.match_accepted:
+            if user.match_accepted is True:
                 status = "Accepted"
             elif user.match_accepted is False:
                 status = "Rejected"
@@ -185,6 +227,7 @@ def get_all_matches(request):
             })
     
     return JsonResponse({"matches": matches})
+
 
 
 
